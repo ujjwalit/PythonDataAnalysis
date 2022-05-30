@@ -167,6 +167,177 @@ def read_excel_file(file_name):
     data = pd.read_excel(file_name, sheet_name=0)
     return data
 
+import pyspark
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+
+sc = pyspark.SparkContext()
+spark = SparkSession(sc)
+
+df = spark.read.csv('data/tables/table_1.csv', header=True, inferSchema=True)
+df.show()
+
+df1 = spark.read.csv('data/tables/table_2.csv', header=True, inferSchema=True)
+df1.show()
+
+df.CreateTempView("df")
+df1.CreateTempView("df1")
+
+df2 = spark.sql("select * from df where df.id = df1.id")
+df2.show()
+
+df1.join(df2, df1.id == df2.id).show()
+
+df.withColumn("new_col", lit("new_val")).show()
+df.column = df.column.cast(pd.StringDtype())
+df.printSchema()
+
+#remove duplicates from dataframe
+df.drop_duplicates(inplace=True)
+
+#read delta table
+df = spark.read.format("delta").load("s3://delta-bucket/delta-table")
+
+#read parquet table
+df = spark.read.parquet("s3://parquet-bucket/parquet-table")
+
+#read streaming data from kafka topic
+df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "localhost:9092").option("subscribe", "topic").load()
+
+#read data from bigquery
+df = spark.read.format("bigquery").option("project", "project-id").option("table", "dataset.table").load()
+
+#read data from mongo db
+df = spark.read.format("com.mongodb.spark.sql.DefaultSource").option("uri", "mongodb://localhost/db.collection").load()
+
+df = pd.read_csv('data/tables/table_1.csv', header=True)
+
+#read data from gcs using pandas
+df = pd.read_csv('gs://bucket-name/file-name.csv', header=True)
+
+#create class for spark job
+class spark_job:
+    def __init__(self, spark_session, spark_job_name):
+        self.spark_session = spark_session
+        self.spark_job_name = spark_job_name
+        self.spark_job_logger = log_util('spark_jobs/' + spark_job_name + '.log').get_logger()
+        self.spark_job_logger.info('Spark Job Started')
+
+    def run(self):
+        try:
+            self.spark_job_logger.info('Spark Job Started')
+            self.spark_job_logger.info('Spark Job Completed')
+        except Exception as e:
+            self.spark_job_logger.error('Spark Job Failed')
+            self.spark_job_logger.error(e)
+
+#function to authenticate using OAuth2 authentication
+def authenticate_using_oauth2(client_id, client_secret, refresh_token):
+    from google.oauth2 import service_account
+    credentials = service_account.Credentials.from_service_account_file(
+        'service_account_key.json',
+        scopes=['https://www.googleapis.com/auth/cloud-platform'],
+
+    )
+    credentials.refresh(Request())
+    return credentials
+
+#function to authenticate using GCP service account
+def authenticate_using_gcp_service_account(service_account_key_file):
+    from google.auth.transport.requests import Request
+    from google.oauth2 import service_account
+    credentials = service_account.Credentials.from_service_account_file(
+        service_account_key_file,
+        scopes=['https://www.googleapis.com/auth/cloud-platform'],
+        target_audience=None,
+    )
+    credentials.refresh(Request())
+    return credentials
+
+#function to validate json file
+def validate_json_file(json_file_path):
+    import json
+    with open(json_file_path) as json_file:
+        try:
+            json.load(json_file)
+        except ValueError as e:
+            return False
+        return True
+
+#function to run flask app
+def run_flask_app(app, port):
+    app.run(host='localhost', port=port)
+
+#check if file exists
+def file_exists(file_path):
+    import os.path
+    return os.path.isfile(file_path)
+
+#check if a port is available
+def is_port_available(port):
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('', port))
+        s.close()
+        return True
+    except socket.error:
+        return False
+
+#cloudformation template
+def create_cloudformation_template(template_file_path, template_name):
+    import json
+    with open(template_file_path) as template_file:
+        template = json.load(template_file)
+    template['AWSTemplateFormatVersion'] = '2010-09-09'
+    template['Description'] = 'AWS CloudFormation template to deploy a Cloud Function'
+    template['Outputs'] = {
+        'FunctionName': {
+            'Value': {
+                'Fn::GetAtt': [
+                    template_name,
+                    'Name'
+                ]
+            }
+        },
+        'FunctionArn': {
+            'Value': {
+                'Fn::GetAtt': [
+                    template_name,
+                    'Arn'
+                ]
+            }
+        },
+        'FunctionVersion': {
+            'Value': {
+                'Fn::GetAtt': [
+                    template_name,
+                    'Version'
+                ]
+            }
+        }
+    }
+    return template
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
