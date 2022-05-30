@@ -258,6 +258,108 @@ def check_stl_load_error_table(conn, table_name, file_name, error_message):
     cur.execute("select count(*) from {} where file_name = '{}' and error_message = '{}'".format(table_name, file_name, error_message))
     return cur.fetchone()[0]
 
+#send notification to slack
+def send_notification_to_slack(message, channel):
+    import requests
+    import json
+    payload = {'text': message, 'channel': channel}
+    headers = {'Content-Type': 'application/json'}
+    requests.post('https://hooks.slack.com/services/T0G6QQQQQ/B0G6QQQQQ/XXXXXXXXXXXXXXXXXXXXXXXXXXXX', data=json.dumps(payload), headers=headers)
+
+#export bigquery table to csv
+def export_bigquery_table_to_csv(project_id, dataset_id, table_id, file_path):
+    import os
+    from google.cloud import bigquery
+    client = bigquery.Client(project=project_id)
+    dataset_ref = client.dataset(dataset_id)
+    table_ref = dataset_ref.table(table_id)
+    job_config = bigquery.job.ExtractJobConfig()
+    job_config.destination_format = bigquery.DestinationFormat.CSV
+    job_config.compression = bigquery.Compression.GZIP
+    job_config.field_delimiter = ','
+    job_config.print_header = True
+    job = client.extract_table(table_ref, file_path, job_config=job_config)
+    job.result()
+    return os.path.join(file_path, '{}.csv'.format(table_id))
+
+#sync gcs bucket to s3 using rsync
+def sync_gcs_bucket_to_s3(gcs_bucket, s3_bucket):
+    import subprocess
+    import os
+    command = 'rsync -avz --delete {} {}'.format(gcs_bucket, s3_bucket)
+    subprocess.call(command, shell=True)
+
+#run query on bigquery
+def run_query_on_bigquery(project_id, query):
+    import os
+    from google.cloud import bigquery
+    client = bigquery.Client(project=project_id)
+    query_job = client.query(query)
+    return query_job
+
+#create bigquery table
+def create_bigquery_table(project_id, dataset_id, table_id, schema):
+    import os
+    from google.cloud import bigquery
+    client = bigquery.Client(project=project_id)
+    dataset_ref = client.dataset(dataset_id)
+    table_ref = dataset_ref.table(table_id)
+    table = bigquery.Table(table_ref, schema=schema)
+    table = client.create_table(table)
+    return table
+
+#update bigquery table description
+def update_bigquery_table_description(project_id, dataset_id, table_id, description):
+    import os
+    from google.cloud import bigquery
+    client = bigquery.Client(project=project_id)
+    dataset_ref = client.dataset(dataset_id)
+    table_ref = dataset_ref.table(table_id)
+    table = client.get_table(table_ref)
+    table.description = description
+    table = client.update_table(table, ['description'])
+    return table
+
+#create bigquery table from gsheet
+def create_bigquery_table_from_gsheet(project_id, dataset_id, table_id, gsheet_id, sheet_name, sheet_range):
+    import os
+    from google.cloud import bigquery
+    from google.oauth2 import service_account
+    client = bigquery.Client(project=project_id)
+    credentials = service_account.Credentials.from_service_account_file(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+    client = bigquery.Client(credentials=credentials, project=project_id)
+    dataset_ref = client.dataset(dataset_id)
+    table_ref = dataset_ref.table(table_id)
+    table = bigquery.Table(table_ref)
+    table.view_query = 'SELECT * FROM `{}.{}.{}`'.format(project_id, dataset_id, gsheet_id)
+    table = client.create_table(table)
+    return table
+
+#run databricks job
+def run_databricks_job(job_id, cluster_id, job_name, job_type, job_params):
+    import os
+    from databricks import Databricks
+    databricks = Databricks(token=os.environ['DATABRICKS_TOKEN'])
+    response = databricks.jobs.run_now(job_id, cluster_id, job_name, job_type, job_params)
+    return response
+
+#check status of databricks job
+def check_databricks_job_status(job_id):
+    import os
+    from databricks import Databricks
+    databricks = Databricks(token=os.environ['DATABRICKS_TOKEN'])
+    response = databricks.jobs.get_status(job_id)
+    return response
+
+#create databricks cluster
+def create_databricks_cluster(cluster_name, cluster_type, spark_version, num_workers, init_scripts):
+    import os
+    from databricks import Databricks
+    databricks = Databricks(token=os.environ['DATABRICKS_TOKEN'])
+    response = databricks.clusters.create(cluster_name, cluster_type, spark_version, num_workers, init_scripts)
+    return response
+
+
 
 
 
