@@ -359,6 +359,15 @@ def create_databricks_cluster(cluster_name, cluster_type, spark_version, num_wor
     response = databricks.clusters.create(cluster_name, cluster_type, spark_version, num_workers, init_scripts)
     return response
 
+#run query on mongo db
+def run_query_on_mongo_db(host, port, db, collection, query):
+    import pymongo
+    client = pymongo.MongoClient(host, port)
+    db = client[db]
+    collection = db[collection]
+    return collection.find(query)
+
+
 
 
 
