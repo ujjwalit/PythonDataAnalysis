@@ -251,13 +251,15 @@ def execute_query_on_redshift(conn, query):
     cur.execute(query)
     return cur
 
-#check stl_load_status table for a table
-def check_stl_load_status_table_for_table(conn, table):
+#check stl_load_error table for a record
+def check_stl_load_error_table(conn, table_name, file_name, error_message):
     import psycopg2
-    query = 'select * from stl_load_status where table_name = %s'
     cur = conn.cursor()
-    cur.execute(query, (table,))
-    return cur
+    cur.execute("select count(*) from {} where file_name = '{}' and error_message = '{}'".format(table_name, file_name, error_message))
+    return cur.fetchone()[0]
+
+
+
 
 
 
