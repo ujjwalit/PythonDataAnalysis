@@ -83,6 +83,93 @@ def deep_learning_model(train, test, epochs=100):
     model.fit(train, test, epochs=epochs, batch_size=1, verbose=2)
     return model
 
+#route prediction
+def route_prediction(data):
+    data['Prediction'] = 0
+    data.loc[data['Total_Distance'] > data['Total_Distance'].shift(1), 'Prediction'] = 1
+    data.dropna(inplace=True)
+    return data
+
+#function to find Longest Substring Without Repeating Characters
+def find_longest_substring(string):
+    max_length = 0
+    start = 0
+    end = 0
+    for i in range(len(string)):
+        for j in range(i+1, len(string)+1):
+            substring = string[i:j]
+            if len(substring) > max_length and is_unique(substring):
+                max_length = len(substring)
+                start = i
+                end = j
+    return string[start:end]
+
+#function for Given the head of a linked list, reverse the nodes of the list k at a time, and return the modified list.
+def reverse_k_nodes(head, k):
+    current = head
+    prev = None
+    count = 0
+    while current and count < k:
+        next = current.next
+        current.next = prev
+        prev = current
+        current = next
+        count += 1
+    if next:
+        head.next = reverse_k_nodes(next, k)
+    return prev
+
+#function to convert integer to roman number
+def int_to_roman(num):
+    val = [
+        1000, 900, 500, 400,
+        100, 90, 50, 40,
+        10, 9, 5, 4,
+        1
+    ]
+    syb = [
+        "M", "CM", "D", "CD",
+        "C", "XC", "L", "XL",
+        "X", "IX", "V", "IV",
+        "I"
+    ]
+    roman_num = ''
+    i = 0
+    while  num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syb[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+
+#function to convert roman number to integer
+def roman_to_int(s):
+    rom_val = {'I': 1, 'V': 5, 'X': 10, 'L': 50, 'C': 100, 'D': 500, 'M': 1000}
+    int_val = 0
+    for i in range(len(s)):
+        if i > 0 and rom_val[s[i]] > rom_val[s[i - 1]]:
+            int_val += rom_val[s[i]] - 2 * rom_val[s[i - 1]]
+        else:
+            int_val += rom_val[s[i]]
+    return int_val
+
+#function to convert interger to hexadecimal
+def int_to_hex(num):
+    if num == 0:
+        return '0'
+    hex_val = {10: 'A', 11: 'B', 12: 'C', 13: 'D', 14: 'E', 15: 'F'}
+    hex_num = ''
+    while num > 0:
+        if num % 16 > 9:
+            hex_num = hex_val[num % 16] + hex_num
+        else:
+            hex_num = str(num % 16) + hex_num
+        num = num // 16
+    return hex_num
+
+
+
 
 
 
